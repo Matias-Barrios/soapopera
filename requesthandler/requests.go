@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -16,7 +17,7 @@ type Request struct {
 }
 
 // Execute:
-func (Request r) Execute() (int, string, error) {
+func (r Request) Execute() (int, string, error) {
 	client := http.Client{
 		Timeout: time.Second * 60,
 		Transport: &http.Transport{
@@ -27,16 +28,16 @@ func (Request r) Execute() (int, string, error) {
 	}
 	request := &http.Request{
 		Host:   r.URL,
-		Body:   r.Paload,
+		Body:   ioutil.NopCloser(strings.NewReader(r.Payload)),
 		Header: r.Headers,
 	}
 	resp, err := client.Do(request)
 	if err != nil {
-		return "", 500, err.Error()
+		return 500, "", err
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", 500, err.Error()
+		return 500, "", err
 	}
-	return resp.StatusCode, body, nil
+	return resp.StatusCode, string(body), nil
 }
